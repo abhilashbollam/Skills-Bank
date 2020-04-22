@@ -1,0 +1,91 @@
+﻿SELECT h.hacker_id, 
+       h.name, 
+       COUNT(c.challenge_id) AS c_count
+FROM Hackers h
+JOIN Challenges c ON c.hacker_id = h.hacker_id
+GROUP BY h.hacker_id, h.name
+HAVING c_count = 
+    (SELECT COUNT(c2.challenge_id) AS c_max
+     FROM challenges as c2 
+     GROUP BY c2.hacker_id 
+     ORDER BY c_max DESC limit 1)
+OR c_count IN 
+    (SELECT DISTINCT c_compare AS c_unique
+     FROM (SELECT h2.hacker_id, 
+                  h2.name, 
+                  COUNT(challenge_id) AS c_compare
+           FROM Hackers h2
+           JOIN Challenges c ON c.hacker_id = h2.hacker_id
+           GROUP BY h2.hacker_id, h2.name) counts
+     GROUP BY c_compare
+     HAVING COUNT(c_compare) = 1)
+ORDER BY c_count DESC, h.hacker_id
+
+SELECT h.name,s.hacker_id,SUM(s.score) as score
+FROM hackers h
+JOIN submissions s
+     ON h.hacker_id=s.hacker_id
+     GROUP BY h.name,s.hacker_id
+     HAVING score =(SELECT MAX(s2.score)
+                   FROM submissions s2
+                
+                   WHERE s2.hacker_id=s2.challenge_id)
+                  ORDER BY score DESC ,s.hacker_id ASC 
+     OR 
+     score NOT IN (SELECT MAX(s3.score)
+                   FROM submissions s3
+                   WHERE s3.score = '0')
+
+                   ORDER BY score DESC ,s.hacker_id ASC
+
+
+
+
+SELECT CASE WHEN A + B <= C OR A + C <= B OR B + C <= A 
+THEN 'Not A Triangle' WHEN A=B AND B=C THEN 'Equilateral' 
+WHEN A=B OR A=C OR B=C THEN 'Isosceles' ELSE 'Scalene' 
+END FROM TRIANGLES
+
+SELECT s.hacker_id,h.name,SUM(s.score) as score
+FROM hackers h
+JOIN submissions s
+     ON h.hacker_id=s.hacker_id
+     GROUP BY s.hacker_id,h.name
+     HAVING score =(SELECT MAX(s2.score)
+                   FROM submissions s2
+                    
+                    WHERE s2.hacker_id=s2.challenge_id AND
+                    s2.score = s2.score  )
+     OR 
+     score NOT IN (SELECT MAX(s3.score)
+                   FROM submissions s3
+                   
+                   WHERE s3.score = '0'
+   )
+  
+   ORDER BY score DESC ,s.hacker_id ASC
+
+
+
+
+SELECT MIN(DATE(created_at)) as week_start_date,
+		   COUNT( CASE WHEN device_type='desktop' THEN device_type ELSE NULL END) as dtop,
+		   COUNT( CASE WHEN device_type='mobile' THEN device_type ELSE NULL END) as mob
+	FROM website_sessions
+	WHERE created_at BETWEEN '2012-04-15' AND '2012-06-09'
+	GROUP BY WEEK(created_at)
+
+SELECT 
+        -- WEEK(created_at),
+       MIN(DATE(created_at)) as week_start_date, COUNT(website_session_id) as sessions
+FROM website_sessions
+WHERE created_at BETWEEN '2012-04-15' AND '2012-05-10'
+GROUP BY WEEK(created_at)
+
+
+SELECT ws.device_type,COUNT(ws.website_session_id) as sessions,COUNT(o.order_id) as orderss,COUNT(o.order_id)/COUNT(ws.website_session_id) as socr
+FROM website_sessions ws
+LEFT JOIN orders o
+          ON ws.website_session_id=o.website_session_id
+          WHERE ws.created_at < '2012-05-11'
+          GROUP BY device_type
